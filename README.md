@@ -2,6 +2,10 @@
 
 A WordPress plugin for managing travel date-based newsletter subscriptions with automated email scheduling.
 
+> **Screen view:**  
+>  
+> ![Travel Newsletter Logo](travel-newsletter.png)
+
 ## Description
 
 Travel Newsletter is a WordPress plugin that lets users subscribe through a custom registration form by providing their name, email, and travel date.
