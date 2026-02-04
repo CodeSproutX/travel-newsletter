@@ -7,7 +7,7 @@ $subscribers = $wpdb->get_results("SELECT * FROM $table ORDER BY created_at DESC
 
 <div class="wrap">
     <div class="my-card">
-        <h1>Newsletter Subscribers</h1>
+        <h1>LS Newsletter Subscribers</h1>
     </div>
     <div class="my-card">
 

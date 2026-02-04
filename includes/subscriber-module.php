@@ -130,22 +130,22 @@ function tn_save_subscriber_ajax()
 {
     // Verify nonce
     if (!isset($_POST['tn_nonce']) || !wp_verify_nonce($_POST['tn_nonce'], 'tn_save')) {
-        wp_send_json_error(['field' => 'general', 'message' => __('Invalid request', 'travel-newsletter')]);
+        wp_send_json_error(['field' => 'general', 'message' => tn_get_message('invalid_request')]);
     }
 
     $errors = [];
 
     // Validate required fields
     if (empty($_POST['name'])) {
-        $errors['name'] = __('Name is required.', 'travel-newsletter');
+        $errors['name'] = tn_get_message('name_required');
     }
 
     if (empty($_POST['email'])) {
-        $errors['email'] = __('Email is required.', 'travel-newsletter');
+        $errors['email'] = tn_get_message('email_required');
     }
 
     if (empty($_POST['travel_date'])) {
-        $errors['travel_date'] = __('Travel date is required.', 'travel-newsletter');
+        $errors['travel_date'] = tn_get_message('date_required');
     }
 
     // If we have validation errors, return them
@@ -169,13 +169,19 @@ function tn_save_subscriber_ajax()
 
     // Validate email format
     if (!is_email($email)) {
-        wp_send_json_error(['field' => 'email', 'message' => __('Please enter a valid email address.', 'travel-newsletter')]);
+        wp_send_json_error([
+            'field'   => 'email',
+            'message' => tn_get_message('invalid_email')
+        ]);
     }
 
     // Validate date format
     $date_parts = explode('-', $travel_date);
     if (count($date_parts) !== 3 || !checkdate((int)$date_parts[1], (int)$date_parts[2], (int)$date_parts[0])) {
-        wp_send_json_error(['field' => 'travel_date', 'message' => __('Please enter a valid travel date (dd/mm/yyyy).', 'travel-newsletter')]);
+        wp_send_json_error([
+            'field'   => 'email',
+            'message' => tn_get_message('invalid_date')
+        ]);
     }
 
     // Check if email already exists
@@ -184,11 +190,8 @@ function tn_save_subscriber_ajax()
         $email
     ));
     if ($existing) {
-        // Show the custom HTML message for already registered email
-        $custom_html = '<div style="padding:15px;border:1px solid #f5c6cb; border-radius:4px; margin-top:10px;margin-bottom:10px; font-size:16px;"> כתובת האימייל הזו כבר רשומה. לעדכון תאריך הנסיעה, אנא 
-            <a href="https://www.website.com/%D7%A6%D7%A8%D7%95-%D7%A7%D7%A9%D7%A8/" target="_blank" rel="noopener">צרו קשר</a>.
-        </div>';
-        wp_send_json_error(['field' => 'email', 'message' => $custom_html]);
+
+        wp_send_json_error(['field' => 'email', 'message' => tn_get_message('email_exists_html')]);
     }
 
     $result = $wpdb->insert($table, [
@@ -199,7 +202,7 @@ function tn_save_subscriber_ajax()
 
 
     if ($result === false) {
-        wp_send_json_error(['field' => 'general', 'message' => __('An error occurred. Please try again later.', 'travel-newsletter')]);
+        wp_send_json_error(['field' => 'general', 'message' => tn_get_message('db_error')]);
     }
 
     $subscriber_id = $wpdb->insert_id;
@@ -209,10 +212,10 @@ function tn_save_subscriber_ajax()
         tn_schedule_emails($subscriber_id, $travel_date);
     }
     if ($subscriber_id) {
-        tn_send_admin_new_subscriber_notification($name, $email, $travel_date);
+        tn_send_admin_new_subscriber_notification($email, $name, $travel_date);
     }
 
-    wp_send_json_success(['message' => __('Thank you for signing up!', 'travel-newsletter')]);
+    wp_send_json_success(['message' => tn_get_message('signup_success')]);
 }
 
 /**
@@ -220,16 +223,16 @@ function tn_save_subscriber_ajax()
  */
 add_action('admin_menu', function () {
     add_menu_page(
-        'Newsletter',
-        'Newsletter',
+        'LS Newsletter',
+        'LS Newsletter',
         'manage_options',
-        'newsletter',
+        'ls-newsletter',
         'tn_subscribers_page',
         'dashicons-email',
         10
     );
     add_submenu_page(
-        'newsletter',
+        'ls-newsletter',
         'Subscribers',
         'Subscribers',
         'manage_options',
@@ -260,7 +263,7 @@ function tn_delete_subscriber_ajax()
 {
     // Verify nonce
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'tn_delete_subscriber_nonce')) {
-        wp_send_json_error(['message' => __('Invalid request', 'travel-newsletter')]);
+        wp_send_json_error(['message' => tn_get_message('invalid_request')]);
     }
 
     // Check permissions
@@ -270,7 +273,7 @@ function tn_delete_subscriber_ajax()
 
     // Validate input
     if (empty($_POST['subscriber_id'])) {
-        wp_send_json_error(['message' => __('Subscriber ID is required.', 'travel-newsletter')]);
+        wp_send_json_error(['message' => tn_get_message('subscriber_id_required')]);
     }
 
     $subscriber_id = intval($_POST['subscriber_id']);
@@ -286,8 +289,9 @@ function tn_delete_subscriber_ajax()
     $result = $wpdb->delete($table, ['id' => $subscriber_id], ['%d']);
 
     if ($result === false) {
-        wp_send_json_error(['message' => __('Failed to delete subscriber. Please try again.', 'travel-newsletter')]);
+        wp_send_json_error(['message' => tn_get_message('delete_failed')]);
     }
 
-    wp_send_json_success(['message' => __('Subscriber deleted successfully!', 'travel-newsletter')]);
+
+    wp_send_json_success(['message' => tn_get_message('delete_success')]);
 }

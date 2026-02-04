@@ -99,3 +99,12 @@ travel-newsletter/
 - **Form text/labels** – Edit `public/subscriber-signup-form.php` and the strings in `lang/newsletter-message.php` (or translate via .po/.mo).
 - **Email styling** – Edit `template-editor.css`; its contents are inlined into sent emails.
 
+## License
+
+GPL v2 or later. See [license URI](https://www.gnu.org/licenses/gpl-2.0.html).
+
+## Changelog
+
+### 1.0.0
+
+- Initial release: subscriber signup, email sequences (30–2 days before travel), queue, daily cron, admin UI for subscribers and templates, test email, placeholders, translation-ready strings.

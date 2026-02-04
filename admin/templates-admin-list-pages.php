@@ -120,7 +120,6 @@ $templates = $wpdb->get_results("SELECT * FROM $table ORDER BY days_before DESC"
     .tn-template-preview-header h3 {
         margin: 0;
         font-size: 20px;
-        color: #2271b1;
         font-weight: 600;
         line-height: 1.5;
         word-wrap: break-word;
@@ -307,9 +306,8 @@ $templates = $wpdb->get_results("SELECT * FROM $table ORDER BY days_before DESC"
                                 template.preview_content +
                                 '</div>' +
                                 '<div class="tn-template-meta">' +
-                                '<span><strong><?php echo esc_js(__('Placeholders:', 'travel-newsletter')); ?></strong> {name}, {travel_date}</span>' +
                                 '<span><strong><?php echo esc_js(__('Created:', 'travel-newsletter')); ?></strong> ' +
-                                template.created_at + '</span>' +
+                                (template.created_at ? template.created_at.split(' ')[0] : '') + '</span>' +
                                 '</div>' +
                                 '</div>' + // tn-template-preview
                                 '</div>' + // tn-template-preview-wrapper

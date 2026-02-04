@@ -9,6 +9,10 @@
         color: unset;
     }
 
+    .email-field-error .field-button-group {
+        height: 66px;
+    }
+
     .tn-form-group-wrapper {
         display: flex;
         align-items: end;
@@ -75,7 +79,7 @@
             ופעילויות בתקופת שהותכם בפורטוגל.</b></p>
     <div id="tn-subscriber-success-message" style="display: none;">
         <p style="color:green; padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px;">
-            <?php _e('תודה על הרשמתכם!', 'travel-newsletter'); ?>
+            <?php echo esc_html(tn_get_message('signup_success')); ?>
         </p>
     </div>
 
@@ -123,6 +127,17 @@
 
 <script>
     jQuery(document).ready(function($) {
+        const messages = {
+            invalidEmail: <?php echo json_encode(tn_get_message('he_invalid_email')); ?>,
+            nameRequired: <?php echo json_encode(tn_get_message('name_required')); ?>,
+            dateRequired: <?php echo json_encode(tn_get_message('date_required')); ?>,
+            heInvalidEmail: <?php echo json_encode(tn_get_message('he_invalid_email')); ?>,
+            heRequiredEmail: <?php echo json_encode(tn_get_message('he_required_email')); ?>,
+            sender: <?php echo json_encode(tn_get_message('he_sender')); ?>,
+            heDbError: <?php echo json_encode(tn_get_message('db_error')); ?>,
+
+        };
+
         // Email validation function
         function isValidEmail(email) {
             var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -136,6 +151,7 @@
             $('#email-error-message').hide();
             $('#email-error-text').html('');
             $('#tn-email').removeClass('field-error-input');
+            $('.tn-form-group-wrapper').removeClass('email-field-error');
             // Debounce: only validate after they pause typing for 500ms
             clearTimeout(emailInputTimer);
             let $this = $(this);
@@ -147,8 +163,9 @@
                 }
                 if (!isValidEmail(emailVal)) {
                     $('#email-error-message').show();
-                    $('#email-error-text').html('כתובת אימייל לא חוקית');
+                    $('#email-error-text').html(messages.heInvalidEmail);
                     $this.addClass('field-error-input');
+                    $('.tn-form-group-wrapper').addClass('email-field-error');
                 }
             }, 500);
         });
@@ -165,7 +182,7 @@
             }
             if (!isValidEmail(emailVal)) {
                 $('#email-error-message').show();
-                $('#email-error-text').html('כתובת אימייל לא חוקית');
+                $('#email-error-text').html(messages.heInvalidEmail);
                 $(this).addClass('field-error-input');
             } else {
                 $('#email-error-message').hide();
@@ -220,16 +237,16 @@
             // Basic client-side validation
             var hasErrors = false;
             if (!formData.name) {
-                showFieldError('tn-name', 'Name is required.');
+                showFieldError('tn-name', messages.nameRequired);
                 hasErrors = true;
             } else if (!formData.email) {
-                showFieldError('tn-email', 'אימייל נדרש.');
+                showFieldError('tn-email', messages.heRequiredEmail);
                 hasErrors = true;
             } else if (!isValidEmail(formData.email)) {
-                showFieldError('tn-email', 'כתובת אימייל לא חוקית');
+                showFieldError('tn-email', messages.heInvalidEmail);
                 hasErrors = true;
             } else if (!formData.travel_date) {
-                showFieldError('tn-travel-date', 'Travel date is required.');
+                showFieldError('tn-travel-date', messages.dateRequired);
                 hasErrors = true;
             }
 
@@ -239,7 +256,7 @@
 
             // Disable submit button
             var originalBtnText = submitBtn.text();
-            submitBtn.prop('disabled', true).text('שולח…');
+            submitBtn.prop('disabled', true).text(messages.sender);
 
             // AJAX request
             $.ajax({
@@ -259,7 +276,7 @@
                         // Show field-specific error or general error
                         var errorField = response.data.field || 'general';
                         var errorMessage = response.data.message ||
-                            'An error occurred. Please try again.';
+                            messages.heDbError;
 
                         // Map field names to input IDs
                         var fieldMap = {
@@ -283,7 +300,7 @@
                 },
                 error: function() {
                     // Show error in general error div
-                    $('#tn-subscriber-error-text').html('An error occurred. Please try again.');
+                    $('#tn-subscriber-error-text').html(messages.heDbError);
                     $('#tn-subscriber-error-message').show();
                     // Re-enable submit button
                     submitBtn.prop('disabled', false).text(originalBtnText);

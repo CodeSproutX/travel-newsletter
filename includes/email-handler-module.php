@@ -16,35 +16,37 @@
  */
 function tn_send_email($to, $subject, $content, $replacements = [])
 {
-    // Default replacements
     $default_replacements = [
         'name' => '',
         'travel_date' => date('Y-m-d')
     ];
 
-    // Merge with provided replacements
     $replacements = array_merge($default_replacements, $replacements);
 
-    // Replace placeholders in content
     $processed_content = str_replace(
         ['{name}', '{travel_date}'],
         [$replacements['name'], $replacements['travel_date']],
         $content
     );
 
-    // Replace placeholders in subject
     $processed_subject = str_replace(
         ['{name}', '{travel_date}'],
         [$replacements['name'], $replacements['travel_date']],
         $subject
     );
 
-    // Convert content to HTML if needed
-    $message = wpautop($processed_content);
+    $css_path = TN_PATH . 'template-editor.css';
+    $css = (file_exists($css_path)) ? file_get_contents($css_path) : '';
+
+    $message = "
+        <div class='email-wrapper'>
+        <style>
+            $css
+        </style>
+            $processed_content
+        </div>";
+
     $headers = ['Content-Type: text/html; charset=UTF-8'];
 
-    // Send email
-    $sent = wp_mail($to, $processed_subject, $message, $headers);
-
-    return $sent;
+    return wp_mail($to, $processed_subject, $message, $headers);
 }

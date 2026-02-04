@@ -17,6 +17,13 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
 
+function tn_add_editor_styles()
+{
+    add_editor_style(plugins_url('template-editor.css', __FILE__));
+}
+add_action('admin_init', 'tn_add_editor_styles');
+
+
 define('TN_PATH', plugin_dir_path(__FILE__));
 define('TN_URL', plugin_dir_url(__FILE__));
 define('TN_VERSION', '1.0.0');
@@ -26,6 +33,7 @@ require_once TN_PATH . 'includes/subscriber-module.php';
 require_once TN_PATH . 'includes/template-module.php';
 require_once TN_PATH . 'includes/email-scheduler-module.php';
 require_once TN_PATH . 'includes/email-handler-module.php';
+require_once TN_PATH . 'lang/newsletter-message.php';
 
 register_activation_hook(__FILE__, 'tn_install_tables');
 register_activation_hook(__FILE__, 'tn_schedule_cron');

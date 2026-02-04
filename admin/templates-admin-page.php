@@ -1,5 +1,9 @@
 <?php
 
+if (!function_exists('tn_get_message') && defined('TN_PATH')) {
+    require_once TN_PATH . 'lang/newsletter-message.php';
+}
+
 global $wpdb;
 $table = $wpdb->prefix . 'travel_newsletter_templates';
 
@@ -26,15 +30,18 @@ $templates = $wpdb->get_results("SELECT * FROM $table ORDER BY days_before DESC"
         <h1><?php echo $edit ? 'Edit Email' : 'Add New Email'; ?></h1>
     </div>
     <div class="my-card">
+        <strong>Placeholders:</strong> {name}, {travel_date}
+    </div>
+    <div class="my-card">
         <?php if (isset($_GET['success'])): ?>
             <div class="notice notice-success is-dismissible">
-                <p><?php _e('Template saved successfully!', 'travel-newsletter'); ?></p>
+                <p><?php echo esc_html(tn_get_message('template_saved_successfully')); ?></p>
             </div>
         <?php endif; ?>
 
         <?php if (isset($_GET['deleted'])): ?>
             <div class="notice notice-success is-dismissible">
-                <p><?php _e('Template deleted successfully!', 'travel-newsletter'); ?></p>
+                <p><?php echo esc_html(tn_get_message('template_deleted_successfully')); ?></p>
             </div>
         <?php endif; ?>
 
@@ -42,11 +49,11 @@ $templates = $wpdb->get_results("SELECT * FROM $table ORDER BY days_before DESC"
             <div class="notice notice-error is-dismissible">
                 <p><?php
                     if ($_GET['error'] === 'template_not_found') {
-                        _e('Template not found.', 'travel-newsletter');
+                        echo esc_html(tn_get_message('template_not_found'));
                     } elseif ($_GET['error'] === 'test_send_failed') {
-                        _e('Failed to send test email. Please check your email configuration.', 'travel-newsletter');
+                        echo esc_html(tn_get_message('test_email_failed'));
                     } else {
-                        _e('An error occurred. Please try again.', 'travel-newsletter');
+                        echo esc_html(tn_get_message('db_error'));
                     }
                     ?></p>
             </div>
@@ -80,7 +87,11 @@ $templates = $wpdb->get_results("SELECT * FROM $table ORDER BY days_before DESC"
                         wp_editor($edit->content ?? '', 'content', [
                             'textarea_name' => 'content',
                             'textarea_rows' => 40,
+                            'tinymce' => [
+                                'content_css' => plugins_url('template-editor.css', __FILE__)
+                            ]
                         ]);
+
                         ?>
                     </td>
                 </tr>
@@ -140,7 +151,6 @@ $templates = $wpdb->get_results("SELECT * FROM $table ORDER BY days_before DESC"
     .tn-template-preview-header h3 {
         margin: 0;
         font-size: 20px;
-        color: #2271b1;
         font-weight: 600;
         line-height: 1.5;
         word-wrap: break-word;
@@ -318,9 +328,8 @@ $templates = $wpdb->get_results("SELECT * FROM $table ORDER BY days_before DESC"
                                 template.preview_content +
                                 '</div>' +
                                 '<div class="tn-template-meta">' +
-                                '<span><strong><?php echo esc_js(__('Placeholders:', 'travel-newsletter')); ?></strong> {name}, {travel_date}</span>' +
                                 '<span><strong><?php echo esc_js(__('Created:', 'travel-newsletter')); ?></strong> ' +
-                                template.created_at + '</span>' +
+                                (template.created_at ? template.created_at.split(' ')[0] : '') + '</span>' +
                                 '</div>' +
                                 '</div>' + // tn-template-preview
                                 '</div>' + // tn-template-preview-wrapper
@@ -377,7 +386,7 @@ $templates = $wpdb->get_results("SELECT * FROM $table ORDER BY days_before DESC"
 
             // Show SweetAlert2 popup with input
             Swal.fire({
-                title: '<?php echo esc_js(__('Send Test Email', 'travel-newsletter')); ?>',
+                title: '<?php echo esc_js(tn_get_message('send_test_email')); ?>',
                 html: '<input id="swal-email-input" type="email" class="swal2-input" placeholder="<?php echo esc_js(__('Email Address', 'travel-newsletter')); ?>" value="' +
                     defaultEmail + '" required>' +
                     '<p style="text-align: left; margin-top: 10px; color: #666; font-size: 13px;"><?php echo esc_js(__('Enter the email address where you want to receive the test email.', 'travel-newsletter')); ?></p>',

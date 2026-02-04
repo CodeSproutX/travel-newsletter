@@ -7,7 +7,7 @@
 
 add_action('admin_menu', function () {
     add_submenu_page(
-        'newsletter',
+        'ls-newsletter',
         'Email Sequences',
         'Email Sequences',
         'manage_options',
@@ -15,7 +15,7 @@ add_action('admin_menu', function () {
         'tn_templates_page_list'
     );
     add_submenu_page(
-        'newsletter',
+        'ls-newsletter',
         'Add New Email',
         'Add New Email',
         'manage_options',
@@ -26,6 +26,9 @@ add_action('admin_menu', function () {
 
 function tn_templates_page_list()
 {
+    if (!function_exists('tn_get_message')) {
+        require_once TN_PATH . 'lang/newsletter-message.php';
+    }
     wp_enqueue_script('jquery');
 
     // Enqueue SweetAlert2
@@ -36,6 +39,9 @@ function tn_templates_page_list()
 
 function tn_templates_page()
 {
+    if (!function_exists('tn_get_message')) {
+        require_once TN_PATH . 'lang/newsletter-message.php';
+    }
     // Enqueue jQuery (it's usually already loaded in admin, but just to be sure)
     wp_enqueue_script('jquery');
 
@@ -126,7 +132,7 @@ function tn_send_test_email_ajax()
 {
     // Verify nonce
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'tn_test_email_nonce')) {
-        wp_send_json_error(['message' => __('Invalid request', 'travel-newsletter')]);
+        wp_send_json_error(['message' => tn_get_message('invalid_request')]);
     }
 
     // Check permissions
@@ -136,7 +142,7 @@ function tn_send_test_email_ajax()
 
     // Validate input
     if (empty($_POST['template_id']) || empty($_POST['test_email'])) {
-        wp_send_json_error(['message' => __('Template ID and email address are required.', 'travel-newsletter')]);
+        wp_send_json_error(['message' => tn_get_message('template_id_required')]);
     }
 
     $template_id = intval($_POST['template_id']);
@@ -144,7 +150,7 @@ function tn_send_test_email_ajax()
 
     // Validate email
     if (!is_email($test_email)) {
-        wp_send_json_error(['message' => __('Please enter a valid email address.', 'travel-newsletter')]);
+        wp_send_json_error(['message' => tn_get_message('invalid_email')]);
     }
 
     global $wpdb;
@@ -154,7 +160,7 @@ function tn_send_test_email_ajax()
     $template = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $template_id));
 
     if (!$template) {
-        wp_send_json_error(['message' => __('Template not found.', 'travel-newsletter')]);
+        wp_send_json_error(['message' => tn_get_message('template_not_found')]);
     }
 
     // Send test email with sample data
@@ -166,9 +172,9 @@ function tn_send_test_email_ajax()
     $sent = tn_send_email($test_email, $template->subject, $template->content, $replacements);
 
     if ($sent) {
-        wp_send_json_success(['message' => __('Test email sent successfully!', 'travel-newsletter')]);
+        wp_send_json_success(['message' => tn_get_message('test_email_sent')]);
     } else {
-        wp_send_json_error(['message' => __('Failed to send test email. Please check your email configuration.', 'travel-newsletter')]);
+        wp_send_json_error(['message' => tn_get_message('test_email_failed')]);
     }
 }
 
@@ -176,7 +182,7 @@ function tn_view_template_ajax()
 {
     // Verify nonce
     if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'tn_view_template_nonce')) {
-        wp_send_json_error(['message' => __('Invalid request', 'travel-newsletter')]);
+        wp_send_json_error(['message' => tn_get_message('invalid_request')]);
     }
 
     // Check permissions
@@ -186,7 +192,7 @@ function tn_view_template_ajax()
 
     // Validate input
     if (empty($_POST['template_id'])) {
-        wp_send_json_error(['message' => __('Template ID is required.', 'travel-newsletter')]);
+        wp_send_json_error(['message' => tn_get_message('template_id_required')]);
     }
 
     $template_id = intval($_POST['template_id']);
@@ -198,7 +204,7 @@ function tn_view_template_ajax()
     $template = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $template_id));
 
     if (!$template) {
-        wp_send_json_error(['message' => __('Template not found.', 'travel-newsletter')]);
+        wp_send_json_error(['message' => tn_get_message('template_not_found')]);
     }
 
     // Process content with placeholders replaced for preview
