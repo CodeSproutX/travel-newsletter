@@ -1,220 +1,110 @@
 # Travel Newsletter
 
-A WordPress plugin for managing travel date-based newsletter subscriptions with automated email scheduling.
+A WordPress plugin that sends automated, travel date–based newsletter emails to subscribers. Subscribers sign up with their name, email, and travel date; the plugin queues and sends a sequence of emails at set intervals before that date (e.g. 30, 25, 20, 15, 10, 5, and 2 days before).
 
-> **Screen view:**  
->  
+> **Screen view:**
+>
 > ![Travel Newsletter Logo](travel-newsletter.png)
 
-## Description
+## Features
 
-Travel Newsletter is a WordPress plugin that lets users subscribe through a custom registration form by providing their name, email, and travel date.
-Once registered, the plugin automatically schedules and sends email templates based on how many days remain before the subscriber’s travel date.
-
--- You can create multiple email templates — for example:
--- Email sent 20 days before travel
--- Email sent 10 days before travel
--- Email sent 3 days before travel
-
-Each template is fully customizable, supports placeholders, and can be previewed or tested directly from the WordPress admin panel.
-
-### Key Features
-
-- **Subscriber Management**: Easy-to-use subscription form with AJAX submission
-- **Email Templates**: Create and manage multiple email templates with customizable content
-- **Automated Scheduling**: Automatically schedules emails based on travel dates
-- **Template Preview**: View email templates with placeholder replacements
-- **Test Email**: Send test emails directly from the admin panel
-- **Modern UI**: Beautiful admin interface with SweetAlert2 modals
-- **RTL Support**: Full support for right-to-left languages (Hebrew)
-- **Placeholder System**: Use `{name}` and `{travel_date}` placeholders in templates
-- **Queue Management**: Automatic email queue system with WordPress cron integration.
-
-### How does the email scheduling work?
-
--- The plugin uses WordPress cron to check for scheduled emails hourly.
-When a subscriber signs up, the plugin stores their details in a database.
--- The user provides:
-Name
-Email
-Travel Date
--- The plugin stores the subscriber details.
--- Based on the travel date, the plugin schedules emails using your predefined templates.
--- The plugin sends the emails to the subscriber's email address.
-
-## Installation
-
-### Manual Installation
-
-1. Download the plugin files
-2. Upload the `travel-newsletter` folder to `/wp-content/plugins/` directory
-3. Activate the plugin through the 'Plugins' menu in WordPress
-4. The plugin will automatically create necessary database tables on activation
-
-### Via WordPress Admin
-
-1. Go to **Plugins** → **Add New**
-2. Click **Upload Plugin**
-3. Choose the `travel-newsletter.zip` file
-4. Click **Install Now**
-5. Activate the plugin
+- **Subscriber signup** – Frontend form (shortcode) to collect name, email, and travel date
+- **Email sequences** – One template per “days before travel” (30, 25, 20, 15, 10, 5, 2). You define subject and HTML content per step
+- **Automated sending** – WordPress cron runs daily and sends queued emails on the correct date
+- **Admin dashboard** – Manage subscribers (view, delete) and email templates (add, edit, preview, send test, delete)
+- **Placeholders** – Use `{name}` and `{travel_date}` in subject and body; they are replaced per subscriber
+- **Test emails** – Send a test email for any template from the admin
+- **Admin notification** – Optional email to the site admin when a new subscriber signs up
+- **Translation-ready** – Text domain `travel-newsletter`; strings prepared for translation
 
 ## Requirements
 
-- WordPress 5.0 or higher
-- PHP 7.4 or higher
-- MySQL 5.6 or higher
+- WordPress 5.0 or later
+- PHP 7.4 or later
+
+## Installation
+
+1. Download or clone this repository into `wp-content/plugins/travel-newsletter/`.
+2. In **WordPress Admin → Plugins**, activate **Travel Newsletter**.
+3. On activation, the plugin creates its database tables and schedules the daily cron event.
 
 ## Usage
 
-### Setting Up Email Templates
+### Add the signup form
 
-1. Navigate to **Travel Newsletter** → **Email Templates** in WordPress admin
-2. Click **Add New Template** or edit an existing one
-3. Fill in the template details:
-   - **Subject**: Email subject line (supports placeholders: `{name}`, `{travel_date}`)
-   - **Days Before Travel**: Number of days before travel date to send this email
-   - **Content**: Email body content (supports HTML and placeholders)
-   - **Active**: Check to enable this template
-4. Click **Save Template**
-
-### Adding the Subscription Form
-
-Add the subscription form to any page or post using the shortcode:
+Use the shortcode on any page or post:
 
 ```
 [travel_newsletter_form]
 ```
 
-The form includes:
+Visitors can enter name, email, and travel date. Submissions are validated (including duplicate email check) and emails are queued automatically.
 
-- Name field
-- Email field
-- Travel date field (dd/mm/yyyy format) (you can use any js library like pickaday or datepicker)
-- AJAX submission (no page reload)
+### Manage email sequences
 
-### Managing Subscribers
+1. Go to **LS Newsletter → Email Sequences** to see all templates.
+2. Go to **LS Newsletter → Add New Email** to create or edit a template.
+3. For each template set:
+   - **Subject** – Can include `{name}` and `{travel_date}`.
+   - **Content** – HTML body; same placeholders.
+   - **Days before** – One of: 30, 25, 20, 15, 10, 5, 2 (when this email is sent relative to travel date).
+   - **Active** – Only active templates are used when queuing/sending.
 
-1. Go to **Travel Newsletter** → **Subscribers** in WordPress admin
-2. View all registered subscribers
-3. Delete subscribers using the delete link (with SweetAlert2 confirmation)
+You can **Preview** and **Send Test Email** from the Email Sequences list.
 
-### Viewing Templates
+### Manage subscribers
 
-1. Go to **Travel Newsletter** → **Email Templates**
-2. Click **View Template** next to any template
-3. Preview the template with sample data in a modal popup
+- **LS Newsletter → Subscribers** – List of all subscribers; you can delete from here.
 
-### Sending Test Emails
+## How it works
 
-1. Go to **Travel Newsletter** → **Email Templates**
-2. Click **Send Test Email** next to any template
-3. Enter the recipient email address
-4. Click **Send**
+1. **Signup** – Subscriber submits the form; record is saved and emails are queued for the configured “days before” steps that are still in the future.
+2. **Queue** – Each (subscriber, template) pair has one queue row with a `send_date`. Past dates are never queued.
+3. **Cron** – A daily cron job runs; it sends all queued emails whose `send_date` is today or in the past, then marks them as sent.
 
-## Placeholders
+## Database tables
 
-The plugin supports the following placeholders in email templates:
+The plugin uses three tables (with your WordPress table prefix):
 
-- `{name}` - Subscriber's name
-- `{travel_date}` - Subscriber's travel date
+- `{prefix}travel_newsletter_subscribers` – Subscriber name, email, travel date
+- `{prefix}travel_newsletter_templates` – Subject, content, days_before, is_active
+- `{prefix}travel_newsletter_queue` – subscriber_id, template_id, send_date, status (pending/sent)
 
-These placeholders are automatically replaced when emails are sent.
-
-## File Structure
+## File structure
 
 ```
 travel-newsletter/
+├── travel-newsletter.php          # Main plugin file
+├── README.md
+├── template-editor.css            # Styles used in email body
 ├── admin/
-│   ├── subscribers-admin-page.php    # Subscribers management page
-│   └── templates-admin-page.php      # Templates management page
+│   ├── subscribers-admin-page.php
+│   ├── templates-admin-list-pages.php
+│   ├── templates-admin-page.php
+│   └── templates-main-page.php
 ├── includes/
-│   ├── database-setup-module.php     # Database table creation
-│   ├── subscriber-module.php         # Subscriber handling & AJAX
-│   ├── template-module.php           # Template management & AJAX
-│   ├── email-scheduler-module.php    # Email scheduling logic
-│   └── email-handler-module.php      # Email sending functionality
-├── public/
-│   └── subscriber-signup-form.php    # Public subscription form
-└── travel-newsletter.php             # Main plugin file
+│   ├── database-setup-module.php
+│   ├── email-handler-module.php
+│   ├── email-scheduler-module.php
+│   ├── subscriber-module.php
+│   └── template-module.php
+├── lang/
+│   └── newsletter-message.php     # Translatable strings
+└── public/
+    └── subscriber-signup-form.php # Form markup + script for shortcode
 ```
 
-## Database Tables
+## Customization
 
-The plugin creates the following database tables:
+- **Form text/labels** – Edit `public/subscriber-signup-form.php` and the strings in `lang/newsletter-message.php` (or translate via .po/.mo).
+- **Email styling** – Edit `template-editor.css`; its contents are inlined into sent emails.
 
-- `wp_travel_newsletter_subscribers` - Stores subscriber information
-- `wp_travel_newsletter_templates` - Stores email templates
-- `wp_travel_newsletter_queue` - Stores scheduled emails queue
+## License
 
-## Hooks & Filters
-
-### Actions
-
-- `tn_send_scheduled_emails` - Fires when processing the email queue (hourly cron)
-
-### Functions
-
-- `tn_send_email($to, $subject, $content, $replacements)` - Send email with template
-- `tn_schedule_emails($subscriber_id, $travel_date)` - Schedule emails for subscriber
-
-## AJAX Endpoints
-
-- `tn_save_subscriber_ajax` - Save subscriber via AJAX
-- `tn_send_test_email_ajax` - Send test email via AJAX
-- `tn_view_template_ajax` - Get template data for preview
-- `tn_delete_subscriber_ajax` - Delete subscriber via AJAX
-
-## Shortcodes
-
-- `[travel_newsletter_form]` - Display the subscription form for frontend
-
-## Styling
-
-The plugin includes custom CSS for:
-
-- Subscription form (RTL support)
-- Admin pages
-- SweetAlert2 modals
-- Template preview
-
-## Security
-
-- All form submissions use WordPress nonces
-- Input sanitization and validation
-- Capability checks for admin functions
-- SQL injection prevention with prepared statements
-- XSS protection with proper escaping
+GPL v2 or later. See [license URI](https://www.gnu.org/licenses/gpl-2.0.html).
 
 ## Changelog
 
 ### 1.0.0
 
-- Initial release
-- Subscriber registration with AJAX
-- Email template management
-- Automated email scheduling
-- Template preview functionality
-- Test email functionality
-- SweetAlert2 integration
-- RTL language support
-
-### Admin - Subscribers Page
-
-View and manage all newsletter subscribers.
-
-### Admin - Templates Page
-
-Create and manage email templates with preview functionality.
-
-### Subscription Form
-
-User-friendly subscription form with AJAX submission.
-
-### Template Preview Modal
-
-Preview templates with sample data before sending.
-
----
-
-**Note**: Make sure your WordPress site has proper email configuration (SMTP) for emails to be sent successfully.
+- Initial release: subscriber signup, email sequences (30–2 days before travel), queue, daily cron, admin UI for subscribers and templates, test email, placeholders, translation-ready strings.
